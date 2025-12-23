@@ -72,7 +72,7 @@ class TestCropRegionPng:
     """Tests for crop_region_png function."""
 
     def test_crops_region(self, sample_image_path: str) -> None:
-        """Test cropping a region from an image."""
+        """Test cropping a region from an image with right/bottom padding."""
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as out:
             out_path = out.name
 
@@ -80,16 +80,16 @@ class TestCropRegionPng:
             bbox = BBoxPx(x=50, y=25, w=50, h=50)
             crop_region_png(sample_image_path, bbox, out_path)
 
-            # Verify the cropped image
+            # Verify the cropped image (includes 10px padding right and bottom)
             with Image.open(out_path) as cropped:
-                assert cropped.size == (50, 50)
-                # Center should be green
+                assert cropped.size == (60, 60)
+                # Center should be green (no offset since padding is only right/bottom)
                 assert cropped.getpixel((25, 25)) == (0, 255, 0)
         finally:
             os.unlink(out_path)
 
     def test_crops_corner(self, sample_image_path: str) -> None:
-        """Test cropping from corner of image."""
+        """Test cropping from corner of image with right/bottom padding."""
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as out:
             out_path = out.name
 
@@ -97,8 +97,9 @@ class TestCropRegionPng:
             bbox = BBoxPx(x=0, y=0, w=50, h=25)
             crop_region_png(sample_image_path, bbox, out_path)
 
+            # 10px padding added to right and bottom
             with Image.open(out_path) as cropped:
-                assert cropped.size == (50, 25)
+                assert cropped.size == (60, 35)
                 # Should be red
                 assert cropped.getpixel((10, 10)) == (255, 0, 0)
         finally:

@@ -91,6 +91,8 @@ class GCSUploader:
 def crop_region_png(infographic_path: str, bbox: BBoxPx, out_path: str) -> None:
     """Crop a region from an infographic and save as PNG.
 
+    Adds 10px padding to right and bottom to compensate for VLM bbox tightness.
+
     Args:
         infographic_path: Path to the source infographic image.
         bbox: Bounding box to crop (in pixels).
@@ -101,13 +103,16 @@ def crop_region_png(infographic_path: str, bbox: BBoxPx, out_path: str) -> None:
     """
     try:
         with Image.open(infographic_path) as img:
-            x = int(bbox.x)
-            y = int(bbox.y)
-            w = int(bbox.w)
-            h = int(bbox.h)
-            cropped = img.crop((x, y, x + w, y + h))
+            img_w, img_h = img.size
+            # Keep original top-left corner
+            x1 = int(bbox.x)
+            y1 = int(bbox.y)
+            # Add 10px padding to right and bottom (clamped to image bounds)
+            x2 = min(int(bbox.x) + int(bbox.w) + 10, img_w)
+            y2 = min(int(bbox.y) + int(bbox.h) + 10, img_h)
+            cropped = img.crop((x1, y1, x2, y2))
             cropped.save(out_path, format="PNG")
-            logger.debug(f"Cropped region to {out_path}: {w}x{h} at ({x},{y})")
+            logger.debug(f"Cropped region to {out_path}: {x2-x1}x{y2-y1} at ({x1},{y1})")
     except Exception as e:
         raise UploadError(f"Failed to crop region: {e}") from e
 

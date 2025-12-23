@@ -185,8 +185,8 @@ class TestBuildRequestsForInfographic:
         style = style_reqs[0]["updateTextStyle"]
         assert style["objectId"] == "TXT_title"
         assert style["style"]["fontFamily"] == "Arial"
-        # Font size is scaled by fit.scale (0.5): 24 * 0.5 = 12
-        assert style["style"]["fontSize"]["magnitude"] == 12.0
+        # Font size: 24 * 0.5 = 12pt base, boost = max(0, (14-12)*0.294) = 0.588, total = 12.588
+        assert style["style"]["fontSize"]["magnitude"] == pytest.approx(12.588)
         assert style["style"]["bold"] is True
 
     def test_creates_image_regions_with_urls(
@@ -247,11 +247,13 @@ class TestBuildRequestsForInfographic:
         # With scale=0.5 and offset (50, 25):
         # x_pt = 50 + 100*0.5 = 100
         # y_pt = 25 + 50*0.5 = 50
-        # w_pt = 400*0.5 = 200
+        # w_pt = 400*0.5 = 200, expanded by font boost factor (no neighbors to constrain)
+        # Font: 24*0.5=12pt base, boost=(14-12)*0.294=0.588, total=12.588
+        # width_boost = 12.588/12 = 1.049, so w_pt = 200 * 1.049 = 209.8
         # h_pt = 60*0.5 = 30
         assert props["transform"]["translateX"] == 100
         assert props["transform"]["translateY"] == 50
-        assert props["size"]["width"]["magnitude"] == 200
+        assert props["size"]["width"]["magnitude"] == pytest.approx(209.8)
         assert props["size"]["height"]["magnitude"] == 30
 
     def test_request_order(

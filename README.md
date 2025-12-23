@@ -2,6 +2,14 @@
 
 Convert static infographic images into editable Google Slides. Provide your infographic images, and the system automatically analyzes them using Vision-Language Models (VLMs) to extract text and visual elements, then reconstructs them as native, editable slide elements.
 
+## Demo
+
+<a href="https://storage.googleapis.com/images2slides/images2slides.mp4" target="_blank">
+  <img src="https://storage.googleapis.com/images2slides/images2slides-Cover.jpg" alt="Watch the demo" />
+</a>
+
+*Click the image above to watch the demo video*
+
 ## Features
 
 - **End-to-End Pipeline**: Just provide images - VLM analysis, layout extraction, and slide creation are all automated

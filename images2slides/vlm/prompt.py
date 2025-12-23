@@ -50,7 +50,12 @@ FIELD RULES:
 IMPORTANT:
 - The image dimensions (width, height) must match the actual image you're analyzing
 - Be VERY precise with bounding boxes - they should TIGHTLY enclose ONLY the specific element
-- For IMAGE regions (icons, logos, charts): draw the bounding box around ONLY the visual graphic itself, NOT any surrounding card/container or nearby text. If there's a circular icon, the bbox should tightly fit just the circle.
+- For IMAGE regions (icons, logos, charts, diagrams):
+  * Draw the bounding box around ONLY the visual graphic itself
+  * EXCLUDE any text labels, titles, or captions that appear above, below, or around the image - those should be separate TEXT regions
+  * Do NOT crop off any part of the actual graphic - include the full visual element
+  * If there's a circular icon, the bbox should tightly fit just the circle, not any nearby text
+  * The goal is to capture the complete image WITHOUT any surrounding text that can be extracted separately
 - For TEXT regions: include only the text, not decorative backgrounds or containers
 - Text and image regions should NOT overlap - if text appears next to an icon, they are separate regions
 - Prefer fewer, larger regions over many small ones (group paragraphs together)

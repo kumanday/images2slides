@@ -94,22 +94,58 @@ def build_requests_for_infographic(
 
     cropped_urls = cropped_url_by_region_id or {}
 
+    # Pre-calculate all region bounds in pt for overlap detection
+    region_bounds_pt: list[tuple[float, float, float, float]] = []
     for region in layout.regions:
         x_pt, y_pt, w_pt, h_pt = bbox_px_to_pt(region.bbox_px, fit)
+        region_bounds_pt.append((x_pt, y_pt, w_pt, h_pt))
+
+    for idx, region in enumerate(layout.regions):
+        x_pt, y_pt, w_pt, h_pt = region_bounds_pt[idx]
 
         if region.type == "text":
             obj_id = f"TXT_{region.id}"
-            reqs.append(req_create_textbox(obj_id, slide_id, x_pt, y_pt, w_pt, h_pt))
+            
+            # Calculate font scaling with non-linear boost for small fonts
+            # Calibrated so 5.5pt -> 8pt and 14pt+ stays unchanged
+            scaled_font_size = None
+            width_boost_factor = 1.0
+            if region.style and region.style.font_size_pt is not None:
+                base_scaled = region.style.font_size_pt * fit.scale
+                boost = max(0, (14 - base_scaled) * 0.294)
+                scaled_font_size = base_scaled + boost
+                if base_scaled > 0:
+                    width_boost_factor = scaled_font_size / base_scaled
+            
+            # Calculate desired expanded width
+            desired_w_pt = w_pt * width_boost_factor
+            
+            # Calculate slide width from fit (image is centered)
+            slide_w_pt = fit.offset_x_pt * 2 + fit.placed_w_pt
+            
+            # Find max width that doesn't overlap with other regions or slide edge
+            right_edge = x_pt + desired_w_pt
+            
+            # Cap to slide boundary (with small margin)
+            right_edge = min(right_edge, slide_w_pt - 2)
+            
+            for other_idx, (ox, oy, ow, oh) in enumerate(region_bounds_pt):
+                if other_idx == idx:
+                    continue
+                # Check if other region is to the right and vertically overlapping
+                if ox > x_pt and oy < y_pt + h_pt and oy + oh > y_pt:
+                    # Other region is to our right and overlaps vertically
+                    # Cap our right edge to not exceed other's left edge (with small gap)
+                    right_edge = min(right_edge, ox - 2)
+            
+            # Ensure we don't shrink below original width
+            adjusted_w_pt = max(w_pt, right_edge - x_pt)
+            
+            reqs.append(req_create_textbox(obj_id, slide_id, x_pt, y_pt, adjusted_w_pt, h_pt))
             reqs.append(req_insert_text(obj_id, region.text or ""))
             reqs.append(req_transparent_shape(obj_id))
 
-            if region.style:
-                # Scale font size proportionally to the image scaling
-                # This ensures text fits properly when image is scaled to slide
-                scaled_font_size = None
-                if region.style.font_size_pt is not None:
-                    scaled_font_size = region.style.font_size_pt * fit.scale
-
+            if region.style and scaled_font_size is not None:
                 style_req = req_text_style(
                     obj_id,
                     font_family=region.style.font_family,
