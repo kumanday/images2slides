@@ -1,0 +1,94 @@
+{
+  "image_px": {"width": 1600, "height": 900},
+  "regions": [
+    {
+      "id": "title",
+      "order": 1,
+      "type": "text",
+      "bbox_px": {"x": 120, "y": 80, "w": 1360, "h": 120},
+      "text": "An Infographic Title",
+      "style": {
+        "font_family": "Arial",
+        "font_size_pt": 28,
+        "bold": true
+      },
+      "crop_from_infographic": false,
+      "confidence": 0.95,
+      "notes": null
+    },
+    {
+      "id": "subtitle",
+      "order": 2,
+      "type": "text",
+      "bbox_px": {"x": 120, "y": 220, "w": 1360, "h": 60},
+      "text": "A descriptive subtitle for the infographic",
+      "style": {
+        "font_family": "Arial",
+        "font_size_pt": 18,
+        "bold": false
+      },
+      "confidence": 0.92,
+      "notes": null
+    },
+    {
+      "id": "stat_1",
+      "order": 3,
+      "type": "text",
+      "bbox_px": {"x": 100, "y": 350, "w": 300, "h": 150},
+      "text": "75%\nof users prefer editable content",
+      "style": {
+        "font_family": "Arial",
+        "font_size_pt": 36,
+        "bold": true
+      },
+      "confidence": 0.88,
+      "notes": "Large statistic callout"
+    },
+    {
+      "id": "stat_2",
+      "order": 4,
+      "type": "text",
+      "bbox_px": {"x": 450, "y": 350, "w": 300, "h": 150},
+      "text": "50+\nlanguages supported",
+      "style": {
+        "font_family": "Arial",
+        "font_size_pt": 36,
+        "bold": true
+      },
+      "confidence": 0.90,
+      "notes": null
+    },
+    {
+      "id": "icon_1",
+      "order": 5,
+      "type": "image",
+      "bbox_px": {"x": 50, "y": 550, "w": 100, "h": 100},
+      "crop_from_infographic": true,
+      "confidence": 0.85,
+      "notes": "Small icon - document symbol"
+    },
+    {
+      "id": "icon_2",
+      "order": 6,
+      "type": "image",
+      "bbox_px": {"x": 200, "y": 550, "w": 100, "h": 100},
+      "crop_from_infographic": true,
+      "confidence": 0.87,
+      "notes": "Small icon - globe symbol"
+    },
+    {
+      "id": "footer",
+      "order": 7,
+      "type": "text",
+      "bbox_px": {"x": 100, "y": 820, "w": 1400, "h": 40},
+      "text": "Source: Example Research 2025 | www.example.com",
+      "style": {
+        "font_family": "Arial",
+        "font_size_pt": 12,
+        "bold": false
+      },
+      "confidence": 0.95,
+      "notes": null
+    }
+  ]
+}
