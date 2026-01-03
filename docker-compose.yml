@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: images2slides
+      POSTGRES_USER: images2slides
+      POSTGRES_PASSWORD: dev_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U images2slides"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: saas/backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://images2slides:dev_password@db:5432/images2slides
+      APP_BASE_URL: http://localhost:3000
+      TOKENS_ENCRYPTION_KEY: ${TOKENS_ENCRYPTION_KEY:-dev_encryption_key_32_chars_ok}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      VLM_PROVIDER: ${VLM_PROVIDER:-google}
+      VLM_MODEL: ${VLM_MODEL}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      STORAGE_TYPE: ${STORAGE_TYPE:-local}
+      LOCAL_STORAGE_PATH: /data/uploads
+    volumes:
+      - ./saas:/app/saas
+      - ./images2slides:/app/images2slides
+      - upload_data:/data/uploads
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: uvicorn saas.backend.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build:
+      context: .
+      dockerfile: saas/worker/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://images2slides:dev_password@db:5432/images2slides
+      TOKENS_ENCRYPTION_KEY: ${TOKENS_ENCRYPTION_KEY:-dev_encryption_key_32_chars_ok}
+      VLM_PROVIDER: ${VLM_PROVIDER:-google}
+      VLM_MODEL: ${VLM_MODEL}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      STORAGE_TYPE: ${STORAGE_TYPE:-local}
+      LOCAL_STORAGE_PATH: /data/uploads
+    volumes:
+      - ./saas:/app/saas
+      - ./images2slides:/app/images2slides
+      - upload_data:/data/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    command: python -m saas.worker.main
+
+  web:
+    build:
+      context: ./saas/web
+      dockerfile: Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-dev_nextauth_secret_change_me}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+    volumes:
+      - ./saas/web:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+  upload_data:
