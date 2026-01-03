@@ -1,0 +1,80 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: images2slides
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: saas/backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/images2slides
+      APP_BASE_URL: http://localhost:3000
+      API_BASE_URL: http://localhost:8000
+      TOKENS_ENCRYPTION_KEY: ${TOKENS_ENCRYPTION_KEY}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      VLM_PROVIDER: ${VLM_PROVIDER:-google}
+      VLM_MODEL: ${VLM_MODEL:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    ports:
+      - "8000:8000"
+    volumes:
+      - saas_data:/data
+    depends_on:
+      - db
+    command: ["sh", "-c", "alembic -c saas/backend/alembic.ini upgrade head && uvicorn saas.backend.main:app --host 0.0.0.0 --port 8000"]
+
+  worker:
+    build:
+      context: .
+      dockerfile: saas/backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/images2slides
+      API_BASE_URL: http://localhost:8000
+      TOKENS_ENCRYPTION_KEY: ${TOKENS_ENCRYPTION_KEY}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      VLM_PROVIDER: ${VLM_PROVIDER:-google}
+      VLM_MODEL: ${VLM_MODEL:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    ports:
+      - "8001:8001"
+    volumes:
+      - saas_data:/data
+    depends_on:
+      - db
+    command: ["sh", "-c", "alembic -c saas/backend/alembic.ini upgrade head && uvicorn saas.worker.main:app --host 0.0.0.0 --port 8001"]
+
+  web:
+    build:
+      context: .
+      dockerfile: saas/web/Dockerfile
+    environment:
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      API_INTERNAL_URL: http://api:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  db_data:
+  saas_data:
