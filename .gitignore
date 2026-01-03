@@ -72,3 +72,13 @@ Thumbs.db
 tmp/
 temp/
 *.tmp
+
+# SaaS-specific
+node_modules/
+.next/
+dist/
+build/
+*.db
+*.sqlite
+*.sqlite3
+.alembic/

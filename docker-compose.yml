@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: images2slides-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: images2slides
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: images2slides-api
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/images2slides
+      APP_BASE_URL: http://localhost:3000
+      TOKENS_ENCRYPTION_KEY: ${TOKENS_ENCRYPTION_KEY:-change-this-in-production}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      VLM_PROVIDER: ${VLM_PROVIDER:-openai}
+      VLM_MODEL: ${VLM_MODEL:-gpt-4o}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./saas/api:/app
+      - ./images2slides:/app/images2slides
+    command: uvicorn saas.api.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: images2slides-worker
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/images2slides
+      APP_BASE_URL: http://localhost:3000
+      TOKENS_ENCRYPTION_KEY: ${TOKENS_ENCRYPTION_KEY:-change-this-in-production}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      VLM_PROVIDER: ${VLM_PROVIDER:-openai}
+      VLM_MODEL: ${VLM_MODEL:-gpt-4o}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./saas/api:/app
+      - ./images2slides:/app/images2slides
+    command: python -m saas.worker.main
+
+  web:
+    build:
+      context: ./saas/web
+      dockerfile: Dockerfile
+    container_name: images2slides-web
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-this-in-production}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    volumes:
+      - ./saas/web/app:/app/app
+      - ./saas/web/lib:/app/lib
+      - ./saas/web/public:/app/public
+      - /app/node_modules
+      - /app/.next
+
+volumes:
+  postgres_data:
