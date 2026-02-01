@@ -129,15 +129,11 @@ def sort_by_reading_order(layout: Layout) -> Layout:
     Returns:
         Layout with sorted regions.
     """
-    sorted_regions = sorted(
-        layout.regions, key=lambda r: (r.order, r.bbox_px.y, r.bbox_px.x)
-    )
+    sorted_regions = sorted(layout.regions, key=lambda r: (r.order, r.bbox_px.y, r.bbox_px.x))
     return Layout(image_px=layout.image_px, regions=tuple(sorted_regions))
 
 
-def enforce_minimum_size(
-    layout: Layout, min_w: float = 10.0, min_h: float = 10.0
-) -> Layout:
+def enforce_minimum_size(layout: Layout, min_w: float = 10.0, min_h: float = 10.0) -> Layout:
     """Expand regions smaller than minimum size.
 
     Args:
@@ -264,9 +260,7 @@ def compute_overlap_area(a: BBoxPx, b: BBoxPx) -> float:
     return (x2 - x1) * (y2 - y1)
 
 
-def find_overlapping_regions(
-    layout: Layout, iou_threshold: float = 0.3
-) -> list[OverlapInfo]:
+def find_overlapping_regions(layout: Layout, iou_threshold: float = 0.3) -> list[OverlapInfo]:
     """Find pairs of regions with significant overlap.
 
     Args:

@@ -21,6 +21,8 @@ from .slides_api import (
 
 logger = logging.getLogger(__name__)
 
+EMU_PER_PT = 12700
+
 
 class SlidesAPIError(Exception):
     """Raised when Slides API call fails."""
@@ -44,15 +46,21 @@ def get_page_size_pt(service: Any, presentation_id: str) -> tuple[float, float]:
     try:
         pres = service.presentations().get(presentationId=presentation_id).execute()
         ps = pres["pageSize"]
-        w = float(ps["width"]["magnitude"])
-        h = float(ps["height"]["magnitude"])
-        unit_w = ps["width"].get("unit", "PT")
-        unit_h = ps["height"].get("unit", "PT")
-        if unit_w != "PT" or unit_h != "PT":
-            raise SlidesAPIError(f"Unexpected page units: {unit_w}, {unit_h}")
+        w = _dimension_to_pt(ps["width"])
+        h = _dimension_to_pt(ps["height"])
         return w, h
     except Exception as e:
         raise SlidesAPIError(f"Failed to get page size: {e}") from e
+
+
+def _dimension_to_pt(dimension: dict[str, Any]) -> float:
+    magnitude = float(dimension["magnitude"])
+    unit = dimension.get("unit", "PT")
+    if unit == "PT":
+        return magnitude
+    if unit == "EMU":
+        return magnitude / EMU_PER_PT
+    raise SlidesAPIError(f"Unexpected page units: {unit}")
 
 
 def build_requests_for_infographic(
@@ -105,7 +113,7 @@ def build_requests_for_infographic(
 
         if region.type == "text":
             obj_id = f"TXT_{region.id}"
-            
+
             # Calculate font scaling with non-linear boost for small fonts
             # Calibrated so 5.5pt -> 8pt and 14pt+ stays unchanged
             scaled_font_size = None
@@ -116,20 +124,20 @@ def build_requests_for_infographic(
                 scaled_font_size = base_scaled + boost
                 if base_scaled > 0:
                     width_boost_factor = scaled_font_size / base_scaled
-            
+
             # Calculate desired expanded width
             desired_w_pt = w_pt * width_boost_factor
-            
+
             # Calculate slide width from fit (image is centered)
             slide_w_pt = fit.offset_x_pt * 2 + fit.placed_w_pt
-            
+
             # Find max width that doesn't overlap with other regions or slide edge
             right_edge = x_pt + desired_w_pt
-            
+
             # Cap to slide boundary (with small margin)
             right_edge = min(right_edge, slide_w_pt - 2)
-            
-            for other_idx, (ox, oy, ow, oh) in enumerate(region_bounds_pt):
+
+            for other_idx, (ox, oy, _ow, oh) in enumerate(region_bounds_pt):
                 if other_idx == idx:
                     continue
                 # Check if other region is to the right and vertically overlapping
@@ -137,10 +145,10 @@ def build_requests_for_infographic(
                     # Other region is to our right and overlaps vertically
                     # Cap our right edge to not exceed other's left edge (with small gap)
                     right_edge = min(right_edge, ox - 2)
-            
+
             # Ensure we don't shrink below original width
             adjusted_w_pt = max(w_pt, right_edge - x_pt)
-            
+
             reqs.append(req_create_textbox(obj_id, slide_id, x_pt, y_pt, adjusted_w_pt, h_pt))
             reqs.append(req_insert_text(obj_id, region.text or ""))
             reqs.append(req_transparent_shape(obj_id))
@@ -238,9 +246,7 @@ def build_slide(
     )
 
     slide_w_pt, slide_h_pt = get_page_size_pt(service, presentation_id)
-    fit = compute_fit(
-        layout.image_px.width, layout.image_px.height, slide_w_pt, slide_h_pt
-    )
+    fit = compute_fit(layout.image_px.width, layout.image_px.height, slide_w_pt, slide_h_pt)
 
     requests = build_requests_for_infographic(
         slide_id=slide_id,
@@ -353,9 +359,7 @@ def build_presentation(
         raise SlidesAPIError("No slides provided")
 
     # Create presentation
-    presentation_id, slide_w_pt, slide_h_pt = create_presentation(
-        service, title, page_size
-    )
+    presentation_id, slide_w_pt, slide_h_pt = create_presentation(service, title, page_size)
 
     # Delete initial blank slide if requested
     if delete_initial:

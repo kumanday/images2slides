@@ -168,9 +168,7 @@ class Layout:
         """Create from dictionary."""
         return cls(
             image_px=ImageDimensions.from_dict(data["image_px"]),
-            regions=tuple(
-                Region.from_dict(r, i) for i, r in enumerate(data.get("regions", []))
-            ),
+            regions=tuple(Region.from_dict(r, i) for i, r in enumerate(data.get("regions", []))),
         )
 
     @classmethod

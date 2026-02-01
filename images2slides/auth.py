@@ -11,9 +11,7 @@ from googleapiclient.discovery import build
 SCOPES = ["https://www.googleapis.com/auth/presentations"]
 
 
-def get_slides_service_oauth(
-    client_secret_path: str, token_path: str = "token.json"
-) -> Any:
+def get_slides_service_oauth(client_secret_path: str, token_path: str = "token.json") -> Any:
     """Get authenticated Slides API service using OAuth.
 
     Args:
@@ -45,7 +43,5 @@ def get_slides_service_sa(sa_json_path: str) -> Any:
     Returns:
         Google Slides API service resource.
     """
-    creds = service_account.Credentials.from_service_account_file(
-        sa_json_path, scopes=SCOPES
-    )
+    creds = service_account.Credentials.from_service_account_file(sa_json_path, scopes=SCOPES)
     return build("slides", "v1", credentials=creds)

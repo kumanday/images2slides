@@ -74,15 +74,15 @@ class GCSUploader:
             bucket = self._get_bucket()
             blob = bucket.blob(object_name)
             blob.upload_from_filename(local_path, content_type="image/png")
-            
+
             # Try to make public, but skip if bucket uses uniform access
             # (bucket must be configured for public access at bucket level)
             try:
                 blob.make_public()
             except Exception:
                 # Uniform bucket-level access enabled - assume bucket is already public
-                logger.debug(f"Could not set object ACL (uniform access?), using public URL anyway")
-            
+                logger.debug("Could not set object ACL (uniform access?), using public URL anyway")
+
             return blob.public_url
         except Exception as e:
             raise UploadError(f"Failed to upload {local_path}: {e}") from e

@@ -13,9 +13,7 @@ PAGE_SIZES = {
 PageSizePreset = Literal["WIDESCREEN_16_9", "WIDESCREEN_16_10", "STANDARD_4_3"]
 
 
-def _element_props(
-    page_object_id: str, x_pt: float, y_pt: float, w_pt: float, h_pt: float
-) -> dict:
+def _element_props(page_object_id: str, x_pt: float, y_pt: float, w_pt: float, h_pt: float) -> dict:
     """Build element properties with size and transform.
 
     Args:

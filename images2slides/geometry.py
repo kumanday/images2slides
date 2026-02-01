@@ -16,9 +16,7 @@ class Fit:
     placed_h_pt: float
 
 
-def compute_fit(
-    img_w_px: float, img_h_px: float, slide_w_pt: float, slide_h_pt: float
-) -> Fit:
+def compute_fit(img_w_px: float, img_h_px: float, slide_w_pt: float, slide_h_pt: float) -> Fit:
     """Compute scaling and offset to fit image on slide.
 
     Preserves aspect ratio and centers the image.

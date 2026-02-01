@@ -9,17 +9,18 @@ from pathlib import Path
 import click
 from dotenv import load_dotenv
 
+
 # Load .env file - search current directory and parent directories
 def _load_env_file() -> None:
     """Load .env file from current directory or project root."""
     current = Path.cwd()
-    
+
     # Check current directory first
     env_path = current / ".env"
     if env_path.exists():
         load_dotenv(env_path, override=False)
         return
-    
+
     # Walk up to find .env near pyproject.toml
     for parent in current.parents:
         if (parent / "pyproject.toml").exists():
@@ -27,6 +28,7 @@ def _load_env_file() -> None:
             if env_path.exists():
                 load_dotenv(env_path, override=False)
             return
+
 
 _load_env_file()
 
@@ -241,7 +243,12 @@ def postprocess(layout: str, output: str) -> None:
                     "id": r.id,
                     "order": r.order,
                     "type": r.type,
-                    "bbox_px": {"x": r.bbox_px.x, "y": r.bbox_px.y, "w": r.bbox_px.w, "h": r.bbox_px.h},
+                    "bbox_px": {
+                        "x": r.bbox_px.x,
+                        "y": r.bbox_px.y,
+                        "w": r.bbox_px.w,
+                        "h": r.bbox_px.h,
+                    },
                     "text": r.text,
                     "style": (
                         {
@@ -642,7 +649,9 @@ def convert(
                     image = Path(image_path)
                     image_region_count = len(layout.image_regions)
                     if image_region_count > 0:
-                        click.echo(f"  [{i + 1}/{len(images)}] Cropping {image_region_count} regions from {image.name}")
+                        click.echo(
+                            f"  [{i + 1}/{len(images)}] Cropping {image_region_count} regions from {image.name}"
+                        )
                         cropped_urls = crop_and_upload_regions(
                             infographic_path=str(image),
                             layout=layout,
@@ -656,8 +665,12 @@ def convert(
                 click.echo(f"Image upload error: {e}", err=True)
                 sys.exit(EXIT_API_ERROR)
         else:
-            click.echo(f"\nNote: {total_image_regions} image region(s) detected but --gcs-bucket not provided.")
-            click.echo("      Image regions will be skipped. Set GCS_BUCKET in .env or use --gcs-bucket.")
+            click.echo(
+                f"\nNote: {total_image_regions} image region(s) detected but --gcs-bucket not provided."
+            )
+            click.echo(
+                "      Image regions will be skipped. Set GCS_BUCKET in .env or use --gcs-bucket."
+            )
             cropped_urls_per_image = [{} for _ in layouts]
     else:
         cropped_urls_per_image = [{} for _ in layouts]

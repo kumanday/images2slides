@@ -169,12 +169,12 @@ class GoogleVLMClient:
                     return json.loads(json_match.group())
                 except json.JSONDecodeError:
                     pass
-            
+
             # Check if response appears truncated (doesn't end with closing brace)
             truncation_hint = ""
             if not text.rstrip().endswith("}"):
                 truncation_hint = "\n[Response appears truncated - may need to increase max_tokens or simplify the image]"
-            
+
             # Show last 200 chars to see where it cut off
             response_preview = text[:300] + "\n...\n" + text[-200:] if len(text) > 500 else text
             raise VLMExtractionError(
@@ -276,7 +276,9 @@ class OpenAIVLMClient:
                     return json.loads(json_match.group())
                 except json.JSONDecodeError:
                     pass
-            raise VLMExtractionError(f"Failed to parse JSON response: {e}\nResponse: {text[:500]}") from e
+            raise VLMExtractionError(
+                f"Failed to parse JSON response: {e}\nResponse: {text[:500]}"
+            ) from e
 
 
 class AnthropicVLMClient:
@@ -373,7 +375,9 @@ class AnthropicVLMClient:
                     return json.loads(json_match.group())
                 except json.JSONDecodeError:
                     pass
-            raise VLMExtractionError(f"Failed to parse JSON response: {e}\nResponse: {text[:500]}") from e
+            raise VLMExtractionError(
+                f"Failed to parse JSON response: {e}\nResponse: {text[:500]}"
+            ) from e
 
 
 class OpenRouterVLMClient:
@@ -473,7 +477,9 @@ class OpenRouterVLMClient:
                     return json.loads(json_match.group())
                 except json.JSONDecodeError:
                     pass
-            raise VLMExtractionError(f"Failed to parse JSON response: {e}\nResponse: {text[:500]}") from e
+            raise VLMExtractionError(
+                f"Failed to parse JSON response: {e}\nResponse: {text[:500]}"
+            ) from e
 
 
 def get_vlm_client(config: VLMConfig) -> VLMClient:
